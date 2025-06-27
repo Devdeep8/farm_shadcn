@@ -1,0 +1,73 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Farmer {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  contactInfo  String?
+  fields       Field[]
+  expenses     Expense[] @relation("FarmerExpenses")
+  incomes      Income[]  @relation("FarmerIncomes")
+}
+
+model Field {
+  id        Int       @id @default(autoincrement())
+  farmerId  Int
+  name      String
+  area      Float     // in biga
+  plantings Planting[]
+  expenses  Expense[] @relation("FieldExpenses")
+  incomes   Income[]  @relation("FieldIncomes")
+  farmer    Farmer    @relation(fields: [farmerId], references: [id])
+}
+
+model Crop {
+  id        Int       @id @default(autoincrement())
+  name      String
+  plantings Planting[]
+}
+
+model Planting {
+  id        Int      @id @default(autoincrement())
+  fieldId   Int
+  cropId    Int
+  startDate DateTime
+  endDate   DateTime?
+  field     Field    @relation(fields: [fieldId], references: [id])
+  crop      Crop     @relation(fields: [cropId], references: [id])
+  expenses  Expense[] @relation("PlantingExpenses")
+  incomes   Income[]  @relation("PlantingIncomes")
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  amount      Float
+  category    String
+  date        DateTime
+  farmerId    Int?
+  fieldId     Int?
+  plantingId  Int?
+  farmer      Farmer?   @relation("FarmerExpenses", fields: [farmerId], references: [id])
+  field       Field?    @relation("FieldExpenses", fields: [fieldId], references: [id])
+  planting    Planting? @relation("PlantingExpenses", fields: [plantingId], references: [id])
+}
+
+model Income {
+  id          Int      @id @default(autoincrement())
+  amount      Float
+  source      String
+  date        DateTime
+  farmerId    Int?
+  fieldId     Int?
+  plantingId  Int?
+  farmer      Farmer?   @relation("FarmerIncomes", fields: [farmerId], references: [id])
+  field       Field?    @relation("FieldIncomes", fields: [fieldId], references: [id])
+  planting    Planting? @relation("PlantingIncomes", fields: [plantingId], references: [id])
+}
