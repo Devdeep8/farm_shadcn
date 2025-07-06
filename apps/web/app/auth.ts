@@ -13,6 +13,7 @@ import { prisma } from "@deva/db";
 declare module "next-auth" {
   interface Session {
     user: {
+      phone: string;
       user_id: string;
       name?: string | null;
       email: string;
