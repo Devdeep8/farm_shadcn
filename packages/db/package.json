@@ -1,0 +1,8 @@
+{
+  "name": "db",
+  "packageManager": "yarn@3.6.4",
+  "dependencies": {
+    "@prisma/client": "^6.11.1",
+    "prisma": "^6.11.1"
+  }
+}

@@ -1,0 +1,162 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// User model for Google authentication (also serves as farmer profile)
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  googleId      String    @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Farmer profile fields
+  phoneNumber   String?   @unique
+  village       String?   // which village they're from
+  language      String    @default("hi") // hindi, punjabi, etc.
+  
+  // Simple relationships
+  expenses      Expense[]
+  earnings      Earning[]
+  reminders     Reminder[]
+  goals         Goal[]
+  
+  // NextAuth.js relations (optional)
+  sessions      Session[]
+  accounts      Account[]
+  
+  @@map("users")
+}
+
+// Simple expense tracking - just the basics
+model Expense {
+  id           Int         @id @default(autoincrement())
+  farmerId     String      // Changed to String to match User id
+  amount       Float
+  category     String      // "बीज" (seeds), "खाद" (fertilizer), "मजदूरी" (labor)
+  description  String?     // optional note
+  date         DateTime    @default(now())
+  cropName     String?     // which crop this expense is for
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  // Simple relationship
+  farmer       User        @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  
+  @@index([farmerId, date])
+}
+
+// Simple earning tracking
+model Earning {
+  id           Int         @id @default(autoincrement())
+  farmerId     String      // Changed to String to match User id
+  amount       Float
+  source       String      // "गेहूं बेचा" (sold wheat), "दूध" (milk), "सब्जी" (vegetables)
+  cropName     String?     // which crop sold
+  quantity     Float?      // how much sold (in kg/quintal)
+  rate         Float?      // rate per kg/quintal
+  buyerName    String?     // who bought it
+  date         DateTime    @default(now())
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  // Simple relationship
+  farmer       User        @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  
+  @@index([farmerId, date])
+}
+
+// Simple goals - like "I want to earn 1 lakh this season"
+model Goal {
+  id           Int         @id @default(autoincrement())
+  farmerId     String      // Changed to String to match User id
+  title        String      // "इस सीजन में 1 लाख कमाना है"
+  targetAmount Float
+  currentAmount Float      @default(0)
+  deadline     DateTime
+  isCompleted  Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  farmer       User        @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  
+  @@index([farmerId, isCompleted])
+}
+
+// Simple reminders - for farming activities
+model Reminder {
+  id           Int         @id @default(autoincrement())
+  farmerId     String      // Changed to String to match User id
+  title        String      // "खेत में पानी देना है"
+  description  String?     // optional details
+  reminderDate DateTime    // when to remind
+  isCompleted  Boolean     @default(false)
+  category     String      // "बुवाई" (sowing), "सिंचाई" (irrigation), "कटाई" (harvesting)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  farmer       User        @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  
+  @@index([farmerId, reminderDate])
+}
+
+// Pre-defined categories for easy selection
+model ExpenseCategory {
+  id           Int         @id @default(autoincrement())
+  name         String      // "बीज", "खाद", "मजदूरी", "डीजल"
+  nameEnglish  String      // "Seeds", "Fertilizer", "Labor", "Diesel"
+  icon         String?     // emoji or icon name
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model EarningSource {
+  id           Int         @id @default(autoincrement())
+  name         String      // "गेहूं", "धान", "दूध", "सब्जी"
+  nameEnglish  String      // "Wheat", "Rice", "Milk", "Vegetables"
+  icon         String?     // emoji or icon name
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+// Optional: Session model for NextAuth.js (if using NextAuth)
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+// Optional: Account model for NextAuth.js OAuth providers
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
