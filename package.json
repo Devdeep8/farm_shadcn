@@ -7,10 +7,10 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "prisma": "yarn workspace db prisma",
-    "prisma:migrate": "yarn prisma migrate dev --schema packages/db/prisma/schema.prisma",
-    "prisma:generate": "yarn prisma generate --schema packages/db/prisma/schema.prisma",
-    "prisma:studio": "yarn prisma studio  packages/db/prisma/schema.prisma"
+    "prisma": "yarn workspace @db prisma",
+    "prisma:migrate": "yarn workspace @deva/db prisma migrate dev",
+    "prisma:generate": "yarn workspace @deva/db prisma generate",
+    "prisma:studio": "yarn workspace @deva/db prisma studio"
   },
   "devDependencies": {
     "prettier": "^3.6.0",
