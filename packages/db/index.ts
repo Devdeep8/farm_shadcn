@@ -7,7 +7,7 @@ declare global {
 }
 
 // Create a singleton instance of PrismaClient
-const prisma =  new PrismaClient({
+const prisma = globalThis.prisma || new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
 });
 
@@ -15,6 +15,11 @@ const prisma =  new PrismaClient({
 if (process.env.NODE_ENV !== 'production') {
   globalThis.prisma = prisma;
 }
+
+// Ensure connections are closed on process exit
+process.on('beforeExit', async () => {
+  await prisma.$disconnect();
+});
 
 export { prisma };
 export default prisma;
